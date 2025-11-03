@@ -1,12 +1,11 @@
 const express = require("express");
-const cors = require("cors"); // <--- Importamos CORS
 const mongoose = require("mongoose");
-require("dotenv").config();
+require("dotenv").config(); // Asegúrate que esto esté al inicio
 
 const Event = require("./models/Event");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // <--- Render usará process.env.PORT
+const PORT = process.env.PORT || 3000;
 
 // --- Conexión a la Base de Datos ---
 mongoose
@@ -19,35 +18,37 @@ mongoose
     process.exit(1);
   });
 
-// --- Middleware de Seguridad CORS (¡IMPORTANTE!) ---
-// Lista de dominios permitidos
-const whitelist = ["https://abogadodebancarrota.com"];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Permite peticiones si el 'origin' está en nuestra lista blanca
-    // o si la petición no tiene 'origin' (como las de Postman o de servidor a servidor)
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("No permitido por CORS"));
-    }
-  },
-};
-
-app.use(cors(corsOptions)); // <--- APLICAMOS LAS OPCIONES DE CORS
 app.use(express.json());
 
-// --- Ruta de Tracking ---
+// --- Ruta de Salud ---
+app.get("/", (req, res) => {
+  res.status(200).send("Tracker está vivo y saludable.");
+});
+
+// --- NUEVAS RUTAS DE API ---
+// Usaremos el prefijo /api/ para todas las rutas del SaaS
+app.use('/api/auth', require('./routes/authRoutes'));
+// (Próximamente añadiremos /api/projects aquí)
+
+// --- Ruta de Tracking (La que ya teníamos) ---
 app.post("/track", async (req, res) => {
   const data = req.body;
+  console.log("--- Evento Recibido ---", data);
 
-  console.log("--- Evento Recibido ---");
-  console.log(data);
+  if (!data.apiKey) {
+    console.warn("Rechazado: No se proporcionó apiKey.");
+    return res.status(401).json({ message: "No autorizado: apiKey requerida" });
+  }
 
   const newEventData = {
+    apiKey: data.apiKey,
     eventType: data.event_type,
     gclid: data.gclid,
+    utm_source: data.utm_source,
+    utm_medium: data.utm_medium,
+    utm_campaign: data.utm_campaign,
+    utm_term: data.utm_term,
+    utm_content: data.utm_content,
     pageUrl: data.page_url,
     clickedUrl: data.clicked_url,
     buttonId: data.button_id,
@@ -57,7 +58,7 @@ app.post("/track", async (req, res) => {
   try {
     const event = new Event(newEventData);
     await event.save();
-    console.log("Evento guardado en la base de datos.");
+    console.log("Evento (con apiKey) guardado en la base de datos.");
     res.status(200).json({ message: "Evento recibido y guardado" });
   } catch (dbError) {
     console.error("Error al guardar en MongoDB:", dbError.message);
@@ -67,6 +68,5 @@ app.post("/track", async (req, res) => {
 
 // --- Iniciar Servidor ---
 app.listen(PORT, () => {
-  // Usamos '0.0.0.0' para que Render pueda "escuchar" correctamente
   console.log(`🚀 Servidor de tracking escuchando en el puerto ${PORT}`);
 });

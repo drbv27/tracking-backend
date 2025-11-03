@@ -1,16 +1,26 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-// Este es el "molde" o "schema" de nuestros datos.
-// Le decimos a MongoDB qué campos esperar.
 const eventSchema = new mongoose.Schema({
-  eventType: { type: String, required: true }, // 'page_visit' o 'button_click'
-  gclid: { type: String, index: true }, // index: true para búsquedas rápidas
-  pageUrl: { type: String },
-  clickedUrl: { type: String },
-  buttonId: { type: String },
-  buttonHref: { type: String },
-  timestamp: { type: Date, default: Date.now }, // MongoDB añadirá la fecha automáticamente
+    // --- NUEVO CAMPO OBLIGATORIO ---
+    apiKey: { 
+        type: String, 
+        required: true, 
+        index: true 
+    },
+
+    // --- Campos existentes ---
+    eventType: { type: String, required: true },
+    gclid: { type: String, index: true },
+    utm_source: { type: String, index: true },
+    utm_medium: { type: String },
+    utm_campaign: { type: String },
+    utm_term: { type: String },
+    utm_content: { type: String },
+    pageUrl: { type: String },
+    clickedUrl: { type: String },
+    buttonId: { type: String },
+    buttonHref: { type: String },
+    timestamp: { type: Date, default: Date.now }
 });
 
-// Compilamos el molde en un "Modelo" que podemos usar
-module.exports = mongoose.model("Event", eventSchema);
+module.exports = mongoose.model('Event', eventSchema);
