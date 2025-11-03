@@ -26,9 +26,8 @@ app.get("/", (req, res) => {
 });
 
 // --- NUEVAS RUTAS DE API ---
-// Usaremos el prefijo /api/ para todas las rutas del SaaS
 app.use('/api/auth', require('./routes/authRoutes'));
-// (Próximamente añadiremos /api/projects aquí)
+app.use('/api/projects', require('./routes/projectRoutes')); // <-- ¡LÍNEA AÑADIDA!
 
 // --- Ruta de Tracking (La que ya teníamos) ---
 app.post("/track", async (req, res) => {
@@ -40,6 +39,7 @@ app.post("/track", async (req, res) => {
     return res.status(401).json({ message: "No autorizado: apiKey requerida" });
   }
 
+  // (Tu lógica de guardar el evento... todo eso queda igual)
   const newEventData = {
     apiKey: data.apiKey,
     eventType: data.event_type,
