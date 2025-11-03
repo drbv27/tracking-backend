@@ -1,5 +1,13 @@
-# Archivo de secretos
+# --- Node.js Backend (Root) ---
+/node_modules
 .env
+.DS_Store
+npm-debug.log*
+*.pem
 
-# Carpeta de dependencias
-node_modules
+# --- Next.js Dashboard (Subfolder) ---
+/dashboard/node_modules
+/dashboard/.next
+/dashboard/.env.local
+/dashboard/build
+/dashboard/out
