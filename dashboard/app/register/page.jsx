@@ -2,21 +2,19 @@
 
 import { useState, useEffect }
  from 'react';
-import { useAuth } from '../context/AuthContext'; // Importamos el cerebro
-import { useRouter } from 'next/navigation'; // Para redirigir
-import Link from 'next/link'; // Para enlazar a /register
+import { useAuth } from '../../context/AuthContext'; // Ajusta la ruta ../..
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function HomePage() {
-  const { login, isAuthenticated, loading } = useAuth(); // Sacamos lo que necesitamos
+export default function RegisterPage() {
+  const { register, isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null); // Para mostrar errores
+  const [error, setError] = useState(null);
 
   // --- Protección de Ruta ---
-  // Si el usuario ya está logueado, lo mandamos al dashboard.
-  // Lo hacemos dentro de un useEffect para que se ejecute en el cliente.
   useEffect(() => {
     if (!loading && isAuthenticated) {
       router.push('/dashboard');
@@ -25,39 +23,29 @@ export default function HomePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Reseteamos el error
+    setError(null);
     try {
-      // Intentamos hacer login
-      await login(email, password);
-      // Si el login fue exitoso, el 'useEffect' de arriba
-      // o el 'if' de abajo se encargará de redirigir.
+      await register(email, password);
       router.push('/dashboard');
     } catch (err) {
-      // Si el backend nos da un error (ver AuthContext.js),
-      // lo mostramos al usuario.
-      setError('Credenciales inválidas. Por favor, intenta de nuevo.');
+      setError('No se pudo crear la cuenta. Intenta con otro email.');
       console.error(err);
     }
   };
 
-  // --- Pantalla de Carga ---
-  // Si estamos cargando el estado de auth, no mostramos nada
   if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-100">
-        {/* Puedes poner un spinner aquí */}
         <p className="text-gray-700">Cargando...</p>
       </main>
     );
   }
 
-  // --- Formulario de Login ---
-  // Si NO estamos cargando Y NO está autenticado, mostramos el login
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="p-8 bg-white rounded shadow-md w-96">
         <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Iniciar Sesión
+          Crear Cuenta
         </h1>
 
         {error && (
@@ -82,7 +70,7 @@ export default function HomePage() {
           </div>
           <div className="mb-6">
             <label className="block text-gray-700 mb-2" htmlFor="password">
-              Contraseña
+              Contraseña (mín. 6 caracteres)
             </label>
             <input
               type="password"
@@ -97,14 +85,14 @@ export default function HomePage() {
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
           >
-            Entrar
+            Registrarse
           </button>
         </form>
 
         <p className="text-center text-gray-600 text-sm mt-6">
-          ¿No tienes cuenta?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Regístrate aquí
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/" className="text-blue-600 hover:underline">
+            Inicia sesión
           </Link>
         </p>
       </div>
