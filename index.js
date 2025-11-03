@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
-require("dotenv").config(); // Asegúrate que esto esté al inicio
+const cors = require("cors"); // <-- ¡Lo re-introducimos!
+require("dotenv").config();
 
 const Event = require("./models/Event");
 
@@ -18,18 +19,33 @@ mongoose
     process.exit(1);
   });
 
+// Middleware para parsear JSON
 app.use(express.json());
+
+// --- NUEVO: Configuración de CORS para Desarrollo ---
+// En producción (cuando NODE_ENV es 'production'), Nginx maneja esto.
+// En local, necesitamos permitir que nuestro frontend (en puerto 3001) hable con nosotros.
+if (process.env.NODE_ENV !== 'production') {
+  console.warn('Ejecutando en modo desarrollo: CORS habilitado para localhost:3001');
+  const corsOptions = {
+    // Permitimos solo el origen de nuestro frontend
+    origin: 'http://localhost:3001', 
+    // Necesario para que el frontend pueda enviar el header 'x-auth-token'
+    allowedHeaders: ['Content-Type', 'x-auth-token'], 
+  };
+  app.use(cors(corsOptions));
+}
 
 // --- Ruta de Salud ---
 app.get("/", (req, res) => {
   res.status(200).send("Tracker está vivo y saludable.");
 });
 
-// --- NUEVAS RUTAS DE API ---
+// --- RUTAS DE API ---
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/projects', require('./routes/projectRoutes')); // <-- ¡LÍNEA AÑADIDA!
+app.use('/api/projects', require('./routes/projectRoutes'));
 
-// --- Ruta de Tracking (La que ya teníamos) ---
+// --- Ruta de Tracking ---
 app.post("/track", async (req, res) => {
   const data = req.body;
   console.log("--- Evento Recibido ---", data);
@@ -39,7 +55,7 @@ app.post("/track", async (req, res) => {
     return res.status(401).json({ message: "No autorizado: apiKey requerida" });
   }
 
-  // (Tu lógica de guardar el evento... todo eso queda igual)
+  // (Toda tu lógica de guardado de eventos... queda igual)
   const newEventData = {
     apiKey: data.apiKey,
     eventType: data.event_type,
