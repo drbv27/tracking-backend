@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../../context/AuthContext'; // Ajusta la ruta ../../..
+import { useAuth } from '../../../context/AuthContext';
 import { useRouter, useParams } from 'next/navigation'; // Importamos useParams
 import axios from 'axios';
 import Link from 'next/link'; // Para el botón de "Volver"
