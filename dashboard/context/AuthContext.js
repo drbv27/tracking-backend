@@ -4,8 +4,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 // 1. Definimos la URL de nuestra API de backend
-// (Gracias al Paso 6.A, esto funcionará en local)
-const API_URL = 'http://localhost:3000/api';
+// En producción, usa una ruta relativa. En desarrollo, usa la URL completa.
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '/api');
 
 // 2. Creamos el Contexto
 const AuthContext = createContext();

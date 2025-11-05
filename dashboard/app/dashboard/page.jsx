@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import Link from 'next/link'; // <-- ¡NUEVO!
+import Link from 'next/link';
 
-const API_URL = 'http://localhost:3000/api';
+// En producción, usa una ruta relativa. En desarrollo, usa la URL completa.
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '/api');
 
 export default function DashboardPage() {
     // --- Hooks de Autenticación (como antes) ---

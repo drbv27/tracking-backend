@@ -8,7 +8,8 @@ import { useRouter, useParams } from 'next/navigation'; // Importamos useParams
 import axios from 'axios';
 import Link from 'next/link'; // Para el botón de "Volver"
 
-const API_URL = 'http://localhost:3000/api';
+// En producción, usa una ruta relativa. En desarrollo, usa la URL completa.
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '/api');
 
 export default function ProjectAnalyticsPage() {
     // --- Hooks de Autenticación y Ruteo ---
