@@ -36,7 +36,39 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// --- ¡NUEVA RUTA! ---
+// --- Ruta para OBTENER detalles de un proyecto específico ---
+// @ruta    GET /api/projects/:projectId
+// @desc    Obtener detalles de un proyecto específico
+// @acceso  Privado
+router.get('/:projectId', auth, async (req, res) => {
+    try {
+        // 1. Encontrar el proyecto por su ID
+        const project = await Project.findById(req.params.projectId);
+
+        // 2. Verificar que el proyecto exista
+        if (!project) {
+            return res.status(404).json({ message: 'Proyecto no encontrado' });
+        }
+
+        // 3. Control de Seguridad CRÍTICO
+        // Verificar que el proyecto le pertenezca al usuario que está logueado
+        if (project.user.toString() !== req.user.id) {
+            return res.status(401).json({ message: 'No autorizado' });
+        }
+
+        // 4. Devolver los detalles del proyecto
+        res.json(project);
+
+    } catch (err) {
+        // Manejo de error para IDs inválidos de MongoDB
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'Proyecto no encontrado' });
+        }
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // --- Ruta para OBTENER eventos de un proyecto específico ---
 // @ruta    GET /api/projects/:projectId/events
 // @desc    Obtener todos los eventos de un proyecto específico

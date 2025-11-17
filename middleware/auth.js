@@ -4,7 +4,16 @@ require('dotenv').config();
 // Este es nuestro "guardia"
 module.exports = function(req, res, next) {
     // 1. Obtener el token del header de la petición
-    const token = req.header('x-auth-token');
+    // Soportamos tanto 'x-auth-token' como 'Authorization' (Bearer token)
+    let token = req.header('x-auth-token');
+    
+    // Si no hay x-auth-token, intentamos con Authorization header
+    if (!token) {
+        const authHeader = req.header('Authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7); // Removemos 'Bearer ' del inicio
+        }
+    }
 
     // 2. Si no hay token, rechazamos
     if (!token) {

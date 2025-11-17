@@ -4,6 +4,7 @@ const cors = require("cors"); // <-- ¡Lo re-introducimos!
 require("dotenv").config();
 
 const Event = require("./models/Event");
+const TrafficSourceDetector = require("./services/trafficSourceDetector");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,9 @@ mongoose
 // Middleware para parsear JSON
 app.use(express.json());
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 // --- NUEVO: Configuración de CORS para Desarrollo ---
 // En producción (cuando NODE_ENV es 'production'), Nginx maneja esto.
 // En local, necesitamos permitir que nuestro frontend (en puerto 3001) hable con nosotros.
@@ -30,8 +34,8 @@ if (process.env.NODE_ENV !== 'production') {
   const corsOptions = {
     // Permitimos solo el origen de nuestro frontend
     origin: 'http://localhost:3001', 
-    // Necesario para que el frontend pueda enviar el header 'x-auth-token'
-    allowedHeaders: ['Content-Type', 'x-auth-token'], 
+    // Necesario para que el frontend pueda enviar los headers de autenticación
+    allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'], 
   };
   app.use(cors(corsOptions));
 }
@@ -44,6 +48,7 @@ app.get("/", (req, res) => {
 // --- RUTAS DE API ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/projects/:projectId/analytics', require('./routes/analyticsRoutes'));
 
 // --- Ruta de Tracking ---
 app.post("/track", async (req, res) => {
@@ -55,16 +60,40 @@ app.post("/track", async (req, res) => {
     return res.status(401).json({ message: "No autorizado: apiKey requerida" });
   }
 
-  // (Toda tu lógica de guardado de eventos... queda igual)
+  // Detect traffic source using TrafficSourceDetector
+  const trafficSource = TrafficSourceDetector.detectSource(data);
+  
+  // Extract referrer domain if referrer is provided
+  const referrerDomain = data.referrer 
+    ? TrafficSourceDetector.extractDomain(data.referrer)
+    : null;
+
+  // Build enhanced event data with traffic source classification
   const newEventData = {
     apiKey: data.apiKey,
     eventType: data.event_type,
+    
+    // Traffic source classification
+    trafficSource: trafficSource,
+    
+    // Platform-specific tracking IDs (existing + new)
     gclid: data.gclid,
+    fbclid: data.fbclid,
+    ttclid: data.ttclid,
+    li_fat_id: data.li_fat_id,
+    
+    // UTM parameters (existing)
     utm_source: data.utm_source,
     utm_medium: data.utm_medium,
     utm_campaign: data.utm_campaign,
     utm_term: data.utm_term,
     utm_content: data.utm_content,
+    
+    // Referrer information
+    referrer: data.referrer,
+    referrerDomain: referrerDomain,
+    
+    // Page information (existing)
     pageUrl: data.page_url,
     clickedUrl: data.clicked_url,
     buttonId: data.button_id,
