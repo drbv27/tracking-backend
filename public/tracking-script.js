@@ -114,7 +114,10 @@
    * @param {Object} additionalData - Additional event data to include
    * @returns {Promise} Fetch promise
    */
-  function track(eventType, additionalData = {}) {
+  function track(eventType, additionalData) {
+    // Handle default parameter
+    additionalData = additionalData || {};
+    
     // Validate API key
     if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
       console.error('[Metrics Lab] Invalid API key. Please configure your API key.');
@@ -122,18 +125,31 @@
     }
 
     // Build tracking payload
-    const data = {
+    var urlParams = getUrlParams();
+    var data = {
       apiKey: API_KEY,
       event_type: eventType,
       page_url: window.location.href,
       referrer: getReferrer(),
-      ...getUrlParams(),
-      ...additionalData,
       timestamp: new Date().toISOString()
     };
+    
+    // Merge URL parameters (replaces spread operator)
+    for (var key in urlParams) {
+      if (urlParams.hasOwnProperty(key)) {
+        data[key] = urlParams[key];
+      }
+    }
+    
+    // Merge additional data (replaces spread operator)
+    for (var key in additionalData) {
+      if (additionalData.hasOwnProperty(key)) {
+        data[key] = additionalData[key];
+      }
+    }
 
     // Remove null values to reduce payload size
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach(function(key) {
       if (data[key] === null || data[key] === undefined) {
         delete data[key];
       }
@@ -151,14 +167,14 @@
       // Use keepalive to ensure tracking completes even if user navigates away
       keepalive: true
     })
-    .then(response => {
+    .then(function(response) {
       if (!response.ok) {
-        throw new Error(`Tracking failed: ${response.status}`);
+        throw new Error('Tracking failed: ' + response.status);
       }
       debugLog('Tracking successful:', eventType);
       return response;
     })
-    .catch(err => {
+    .catch(function(err) {
       console.error('[Metrics Lab] Tracking error:', err);
       throw err;
     });
@@ -170,7 +186,7 @@
    */
   function trackPageView() {
     track('page_view')
-      .catch(() => {
+      .catch(function() {
         // Silently fail - don't disrupt user experience
       });
   }
@@ -181,16 +197,18 @@
    * @param {HTMLElement} element - The clicked element
    */
   function trackClick(element) {
-    const clickData = {
+    var buttonText = element.textContent ? element.textContent.trim().substring(0, 100) : null;
+    
+    var clickData = {
       clicked_url: element.href || window.location.href,
       button_id: element.id || null,
       button_href: element.getAttribute('href') || null,
-      button_text: element.textContent?.trim().substring(0, 100) || null,
+      button_text: buttonText,
       button_class: element.className || null
     };
 
     track('click', clickData)
-      .catch(() => {
+      .catch(function() {
         // Silently fail - don't disrupt user experience
       });
   }
@@ -202,18 +220,19 @@
    * @param {HTMLElement} element - The clicked call button
    */
   function trackCallClick(element) {
-    const phoneNumber = element.href.replace('tel:', '').trim();
+    var phoneNumber = element.href.replace('tel:', '').trim();
+    var buttonText = element.textContent ? element.textContent.trim() : null;
     
-    const callData = {
+    var callData = {
       event_type: 'call_click',
       phone_number: phoneNumber,
       button_id: element.id || null,
-      button_text: element.textContent?.trim() || null,
+      button_text: buttonText,
       button_class: element.className || null
     };
 
     track('call_click', callData)
-      .catch(() => {
+      .catch(function() {
         // Silently fail - don't disrupt user experience
       });
   }
@@ -224,7 +243,7 @@
    * @param {HTMLFormElement} form - The submitted form
    */
   function trackFormSubmit(form) {
-    const formData = {
+    var formData = {
       form_id: form.id || null,
       form_name: form.name || null,
       form_action: form.action || null,
@@ -232,7 +251,7 @@
     };
 
     track('form_submit', formData)
-      .catch(() => {
+      .catch(function() {
         // Silently fail - don't disrupt user experience
       });
   }
