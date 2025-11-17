@@ -67,7 +67,7 @@ export default function OverviewTab({ projectId, dateRange }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, showError]);
 
   useEffect(() => {
     fetchOverviewData();

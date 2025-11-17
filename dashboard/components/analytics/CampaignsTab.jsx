@@ -75,7 +75,7 @@ export default function CampaignsTab({ projectId, dateRange }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, dateRange, selectedPlatform]);
+  }, [projectId, dateRange, selectedPlatform, showError]);
 
   useEffect(() => {
     fetchCampaignsData();

@@ -296,7 +296,7 @@ export default function Layout({ children }) {
                                     <details className="bg-gray-50 rounded-lg p-4">
                                         <summary className="font-medium text-gray-900 cursor-pointer">WordPress</summary>
                                         <div className="mt-3 text-sm text-gray-600">
-                                            <p>Add to your theme's footer.php before &lt;/body&gt; or use a plugin like "Insert Headers and Footers"</p>
+                                            <p>Add to your theme&apos;s footer.php before &lt;/body&gt; or use a plugin like &quot;Insert Headers and Footers&quot;</p>
                                         </div>
                                     </details>
                                     <details className="bg-gray-50 rounded-lg p-4">

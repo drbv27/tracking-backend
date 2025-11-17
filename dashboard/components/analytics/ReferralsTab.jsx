@@ -59,7 +59,7 @@ export default function ReferralsTab({ projectId, dateRange }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, showError]);
 
   useEffect(() => {
     fetchReferralsData();

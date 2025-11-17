@@ -68,7 +68,7 @@ export default function OrganicTab({ projectId, dateRange }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, dateRange]);
+  }, [projectId, dateRange, showError]);
 
   useEffect(() => {
     fetchOrganicData();
