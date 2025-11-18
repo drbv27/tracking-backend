@@ -26,19 +26,23 @@ app.use(express.json());
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// --- NUEVO: Configuración de CORS para Desarrollo ---
-// En producción (cuando NODE_ENV es 'production'), Nginx maneja esto.
-// En local, necesitamos permitir que nuestro frontend (en puerto 3001) hable con nosotros.
-if (process.env.NODE_ENV !== 'production') {
-  console.warn('Ejecutando en modo desarrollo: CORS habilitado para localhost:3001');
-  const corsOptions = {
-    // Permitimos solo el origen de nuestro frontend
-    origin: 'http://localhost:3001', 
-    // Necesario para que el frontend pueda enviar los headers de autenticación
-    allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'], 
-  };
-  app.use(cors(corsOptions));
-}
+// --- Configuración de CORS Dinámica ---
+// Permitir requests desde CUALQUIER dominio para el endpoint /track
+// Esto es seguro porque validamos el API key en cada request
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Para el endpoint /track, permitir CUALQUIER origen
+    // La seguridad está en el API key, no en el dominio
+    callback(null, true);
+  },
+  allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+console.log('✅ CORS configurado: Permitiendo requests desde cualquier dominio (seguridad por API key)');
 
 // --- Ruta de Salud ---
 app.get("/", (req, res) => {

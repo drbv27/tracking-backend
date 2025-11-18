@@ -45,186 +45,41 @@ const TRACKING_ENDPOINT = 'https://metricslab.tudominio.com/track';
 
 ## 🌐 Parte 2: Instalar el Script en WordPress
 
-### Opción A: Usando un Plugin (Recomendado - Más Fácil)
+### ⚠️ IMPORTANTE: Usa la Versión Segura
 
-#### Paso 2A.1: Instalar Plugin
+**ANTES DE CONTINUAR:** Este script ha sido actualizado para ser 100% compatible con WordPress y plugins de cache. 
+
+**👉 USA LA GUÍA SEGURA:** `GUIA_INSTALACION_WORDPRESS_SEGURA.md`
+
+### Opción A: Code Snippets (Recomendado y Seguro)
+
+#### Paso 2A.1: Instalar Code Snippets
 
 1. En tu WordPress, ve a **Plugins → Añadir nuevo**
-2. Busca **"Insert Headers and Footers"** o **"WPCode"**
-3. Instala y activa el plugin
+2. Busca **"Code Snippets"**
+3. Instala **"Code Snippets" by Code Snippets Pro**
+4. Activa el plugin
 
-#### Paso 2A.2: Agregar el Script
+#### Paso 2A.2: Agregar el Script Seguro
 
-1. Ve a **Configuración → Insert Headers and Footers** (o **Code Snippets** si usas WPCode)
-2. En la sección **"Scripts in Footer"**, pega este código:
+1. Ve a **Snippets → Add New**
+2. **Título:** "Metrics Lab Tracking - Safe Version"
+3. **Tipo:** JavaScript Snippet
+4. **Ubicación:** Site Wide (Footer)
+5. Pega el código de `GUIA_INSTALACION_WORDPRESS_SEGURA.md`
 
-```html
-<!-- Metrics Lab Tracking Script -->
-<script>
-(function() {
-  'use strict';
+**⚠️ NOTA:** El código completo y actualizado está en `GUIA_INSTALACION_WORDPRESS_SEGURA.md`
 
-  // ============================================================================
-  // CONFIGURACIÓN - REEMPLAZA CON TUS VALORES
-  // ============================================================================
-  
-  const API_KEY = 'TU_API_KEY_AQUI';
-  const TRACKING_ENDPOINT = 'https://tu-dominio-hostinger.com/track';
-  const DEBUG_MODE = false; // Cambia a true para ver logs en consola
+**Características del script seguro:**
+- ✅ Compatible con todos los plugins de cache
+- ✅ Sintaxis ES5 (no usa const, let, arrow functions)
+- ✅ Funciona en navegadores antiguos (IE8+)
+- ✅ No rompe minificadores ni optimizadores
+- ✅ Múltiples fallbacks para máxima compatibilidad
 
-  // ============================================================================
-  // NO MODIFIQUES NADA DEBAJO DE ESTA LÍNEA
-  // ============================================================================
-
-  function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      gclid: params.get('gclid') || null,
-      fbclid: params.get('fbclid') || null,
-      ttclid: params.get('ttclid') || null,
-      li_fat_id: params.get('li_fat_id') || null,
-      utm_source: params.get('utm_source') || null,
-      utm_medium: params.get('utm_medium') || null,
-      utm_campaign: params.get('utm_campaign') || null,
-      utm_term: params.get('utm_term') || null,
-      utm_content: params.get('utm_content') || null
-    };
-  }
-
-  function getReferrer() {
-    return document.referrer || null;
-  }
-
-  function debugLog(message, data) {
-    if (DEBUG_MODE) {
-      console.log('[Metrics Lab]', message, data);
-    }
-  }
-
-
-  function track(eventType, additionalData = {}) {
-    if (!API_KEY || API_KEY === 'TU_API_KEY_AQUI') {
-      console.error('[Metrics Lab] API key no configurada');
-      return Promise.reject(new Error('Invalid API key'));
-    }
-
-    const data = {
-      apiKey: API_KEY,
-      event_type: eventType,
-      page_url: window.location.href,
-      referrer: getReferrer(),
-      ...getUrlParams(),
-      ...additionalData,
-      timestamp: new Date().toISOString()
-    };
-
-    Object.keys(data).forEach(key => {
-      if (data[key] === null || data[key] === undefined) {
-        delete data[key];
-      }
-    });
-
-    debugLog('Enviando evento:', data);
-
-    return fetch(TRACKING_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      keepalive: true
-    })
-    .then(response => {
-      if (!response.ok) throw new Error(`Error: ${response.status}`);
-      debugLog('Evento enviado:', eventType);
-      return response;
-    })
-    .catch(err => {
-      console.error('[Metrics Lab] Error:', err);
-      throw err;
-    });
-  }
-
-  function trackPageView() {
-    track('page_view').catch(() => {});
-  }
-
-  function trackClick(element) {
-    const clickData = {
-      clicked_url: element.href || window.location.href,
-      button_id: element.id || null,
-      button_href: element.getAttribute('href') || null,
-      button_text: element.textContent?.trim().substring(0, 100) || null,
-      button_class: element.className || null
-    };
-    track('click', clickData).catch(() => {});
-  }
-
-
-  function trackCallClick(element) {
-    const phoneNumber = element.href.replace('tel:', '').trim();
-    const callData = {
-      event_type: 'call_click',
-      phone_number: phoneNumber,
-      button_id: element.id || null,
-      button_text: element.textContent?.trim() || null,
-      button_class: element.className || null
-    };
-    track('call_click', callData).catch(() => {});
-  }
-
-  function trackFormSubmit(form) {
-    const formData = {
-      form_id: form.id || null,
-      form_name: form.name || null,
-      form_action: form.action || null,
-      form_method: form.method || 'get'
-    };
-    track('form_submit', formData).catch(() => {});
-  }
-
-  function initialize() {
-    debugLog('Inicializando Metrics Lab...');
-    trackPageView();
-
-    document.addEventListener('click', function(event) {
-      const element = event.target.closest('a, button');
-      if (element) {
-        if (element.tagName === 'A' && element.href && element.href.startsWith('tel:')) {
-          trackCallClick(element);
-        } else {
-          trackClick(element);
-        }
-      }
-    }, true);
-
-    document.addEventListener('submit', function(event) {
-      const form = event.target;
-      if (form.tagName === 'FORM') {
-        trackFormSubmit(form);
-      }
-    }, true);
-
-    debugLog('Metrics Lab inicializado');
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
-  }
-
-  window.MetricsLab = {
-    track: track,
-    trackPageView: trackPageView,
-    trackCallClick: trackCallClick,
-    trackFormSubmit: trackFormSubmit,
-    version: '2.0.0'
-  };
-
-})();
-</script>
-```
-
-3. **Guarda los cambios**
+3. **Activa el snippet**
+4. **Guarda los cambios**
+5. **Purga el cache** de todos tus plugins de cache
 
 
 

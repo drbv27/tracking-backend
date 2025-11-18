@@ -1,5 +1,6 @@
 /**
  * Metrics Lab Enhanced Tracking Script
+ * WordPress & Cache-Plugin Safe Version
  * 
  * This script automatically tracks page views and user interactions with comprehensive
  * traffic source detection including organic, paid campaigns (Google Ads, Facebook Ads,
@@ -12,13 +13,12 @@
  * - Referrer tracking
  * - Click event tracking
  * - Page view tracking
+ * - ES5 compatible (works with all cache plugins and minifiers)
  * 
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 (function() {
-  'use strict';
-
   // ============================================================================
   // CONFIGURATION
   // ============================================================================
@@ -27,27 +27,27 @@
    * Replace with your actual API key from Metrics Lab dashboard
    * You can find this in your project settings
    */
-  const API_KEY = 'YOUR_API_KEY_HERE';
+  var API_KEY = 'YOUR_API_KEY_HERE';
   
   /**
    * Tracking endpoint URL
    * Update this to match your Metrics Lab backend URL
    */
-  const TRACKING_ENDPOINT = 'https://your-domain.com/track';
+  var TRACKING_ENDPOINT = 'https://your-domain.com/track';
   
   /**
    * Enable debug mode to see tracking events in console
    * Set to false in production
    */
-  const DEBUG_MODE = false;
+  var DEBUG_MODE = false;
 
   // ============================================================================
-  // UTILITY FUNCTIONS
+  // UTILITY FUNCTIONS - WordPress & Cache Safe
   // ============================================================================
 
   /**
    * Extracts all URL parameters from the current page URL
-   * Captures platform-specific tracking IDs and UTM parameters
+   * Compatible with older browsers and WordPress cache plugins
    * 
    * Supported parameters:
    * - gclid: Google Ads Click ID
@@ -63,21 +63,29 @@
    * @returns {Object} Object containing all URL parameters
    */
   function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
+    var params = {};
+    var search = window.location.search.substring(1);
+    
+    if (search) {
+      var pairs = search.split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var pair = pairs[i].split('=');
+        if (pair.length === 2) {
+          params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+        }
+      }
+    }
     
     return {
-      // Platform-specific tracking IDs
-      gclid: params.get('gclid') || null,
-      fbclid: params.get('fbclid') || null,
-      ttclid: params.get('ttclid') || null,
-      li_fat_id: params.get('li_fat_id') || null,
-      
-      // UTM parameters
-      utm_source: params.get('utm_source') || null,
-      utm_medium: params.get('utm_medium') || null,
-      utm_campaign: params.get('utm_campaign') || null,
-      utm_term: params.get('utm_term') || null,
-      utm_content: params.get('utm_content') || null
+      gclid: params.gclid || null,
+      fbclid: params.fbclid || null,
+      ttclid: params.ttclid || null,
+      li_fat_id: params.li_fat_id || null,
+      utm_source: params.utm_source || null,
+      utm_medium: params.utm_medium || null,
+      utm_campaign: params.utm_campaign || null,
+      utm_term: params.utm_term || null,
+      utm_content: params.utm_content || null
     };
   }
 
@@ -93,26 +101,27 @@
 
   /**
    * Logs debug information to console when DEBUG_MODE is enabled
+   * Safe for all browsers and WordPress environments
    * 
    * @param {string} message - Debug message
-   * @param {Object} data - Additional data to log
+   * @param {*} data - Additional data to log
    */
   function debugLog(message, data) {
-    if (DEBUG_MODE) {
-      console.log('[Metrics Lab]', message, data);
+    if (DEBUG_MODE && window.console && window.console.log) {
+      window.console.log('[Metrics Lab]', message, data || '');
     }
   }
 
   // ============================================================================
-  // TRACKING FUNCTIONS
+  // TRACKING FUNCTIONS - WordPress & Cache Safe
   // ============================================================================
 
   /**
    * Sends a tracking event to the Metrics Lab backend
+   * Compatible with all browsers and WordPress environments
    * 
    * @param {string} eventType - Type of event (e.g., 'page_view', 'click')
    * @param {Object} additionalData - Additional event data to include
-   * @returns {Promise} Fetch promise
    */
   function track(eventType, additionalData) {
     // Handle default parameter
@@ -120,8 +129,10 @@
     
     // Validate API key
     if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
-      console.error('[Metrics Lab] Invalid API key. Please configure your API key.');
-      return Promise.reject(new Error('Invalid API key'));
+      if (window.console && window.console.error) {
+        window.console.error('[Metrics Lab] Invalid API key. Please configure your API key.');
+      }
+      return;
     }
 
     // Build tracking payload
@@ -134,70 +145,71 @@
       timestamp: new Date().toISOString()
     };
     
-    // Merge URL parameters (replaces spread operator)
+    // Merge URL parameters
     for (var key in urlParams) {
-      if (urlParams.hasOwnProperty(key)) {
+      if (urlParams.hasOwnProperty(key) && urlParams[key] !== null) {
         data[key] = urlParams[key];
       }
     }
     
-    // Merge additional data (replaces spread operator)
+    // Merge additional data
     for (var key in additionalData) {
-      if (additionalData.hasOwnProperty(key)) {
+      if (additionalData.hasOwnProperty(key) && additionalData[key] !== null) {
         data[key] = additionalData[key];
       }
     }
 
-    // Remove null values to reduce payload size
-    Object.keys(data).forEach(function(key) {
-      if (data[key] === null || data[key] === undefined) {
-        delete data[key];
-      }
-    });
-
     debugLog('Sending tracking event:', data);
 
-    // Send tracking request
-    return fetch(TRACKING_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data),
-      // Use keepalive to ensure tracking completes even if user navigates away
-      keepalive: true
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        throw new Error('Tracking failed: ' + response.status);
-      }
-      debugLog('Tracking successful:', eventType);
-      return response;
-    })
-    .catch(function(err) {
-      console.error('[Metrics Lab] Tracking error:', err);
-      throw err;
-    });
+    // Send tracking request with fallback for older browsers
+    if (window.fetch) {
+      fetch(TRACKING_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+        keepalive: true
+      })
+      .then(function(response) {
+        if (response.ok) {
+          debugLog('Tracking successful:', eventType);
+        }
+      })
+      .catch(function(err) {
+        debugLog('Tracking error:', err);
+      });
+    } else {
+      // Fallback for very old browsers
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', TRACKING_ENDPOINT, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify(data));
+    }
   }
 
   /**
    * Tracks a page view event
-   * Automatically called on page load
+   * WordPress safe version
    */
   function trackPageView() {
-    track('page_view')
-      .catch(function() {
-        // Silently fail - don't disrupt user experience
-      });
+    track('page_view');
   }
 
   /**
    * Tracks a click event on buttons and links
+   * WordPress safe version
    * 
    * @param {HTMLElement} element - The clicked element
    */
   function trackClick(element) {
-    var buttonText = element.textContent ? element.textContent.trim().substring(0, 100) : null;
+    var buttonText = null;
+    if (element.textContent) {
+      buttonText = element.textContent.trim();
+      if (buttonText.length > 100) {
+        buttonText = buttonText.substring(0, 100);
+      }
+    }
     
     var clickData = {
       clicked_url: element.href || window.location.href,
@@ -207,15 +219,13 @@
       button_class: element.className || null
     };
 
-    track('click', clickData)
-      .catch(function() {
-        // Silently fail - don't disrupt user experience
-      });
+    track('click', clickData);
   }
 
   /**
    * Tracks a call button click event
    * Specifically tracks clicks on phone number links (tel: links)
+   * WordPress safe version
    * 
    * @param {HTMLElement} element - The clicked call button
    */
@@ -224,21 +234,18 @@
     var buttonText = element.textContent ? element.textContent.trim() : null;
     
     var callData = {
-      event_type: 'call_click',
       phone_number: phoneNumber,
       button_id: element.id || null,
       button_text: buttonText,
       button_class: element.className || null
     };
 
-    track('call_click', callData)
-      .catch(function() {
-        // Silently fail - don't disrupt user experience
-      });
+    track('call_click', callData);
   }
 
   /**
    * Tracks a form submission event
+   * WordPress safe version
    * 
    * @param {HTMLFormElement} form - The submitted form
    */
@@ -250,18 +257,16 @@
       form_method: form.method || 'get'
     };
 
-    track('form_submit', formData)
-      .catch(function() {
-        // Silently fail - don't disrupt user experience
-      });
+    track('form_submit', formData);
   }
 
   // ============================================================================
-  // EVENT LISTENERS
+  // EVENT LISTENERS - WordPress & Cache Safe
   // ============================================================================
 
   /**
    * Initialize tracking when DOM is ready
+   * Compatible with all WordPress themes and plugins
    */
   function initialize() {
     debugLog('Initializing Metrics Lab tracking...');
@@ -269,52 +274,78 @@
     // Track initial page view
     trackPageView();
 
-    // Track clicks on links and buttons
-    document.addEventListener('click', function(event) {
-      // Find the closest link or button element
-      const element = event.target.closest('a, button');
-      
-      if (element) {
-        // Check if it's a phone call link
-        if (element.tagName === 'A' && element.href && element.href.startsWith('tel:')) {
-          trackCallClick(element);
-        } else {
-          trackClick(element);
+    // Track clicks on links and buttons - WordPress safe
+    if (document.addEventListener) {
+      document.addEventListener('click', function(event) {
+        var element = event.target;
+        
+        // Find the closest link or button element (manual traversal for compatibility)
+        while (element && element !== document) {
+          if (element.tagName === 'A' || element.tagName === 'BUTTON') {
+            // Check if it's a phone call link
+            if (element.tagName === 'A' && element.href && element.href.indexOf('tel:') === 0) {
+              trackCallClick(element);
+            } else {
+              trackClick(element);
+            }
+            break;
+          }
+          element = element.parentNode;
         }
-      }
-    }, true); // Use capture phase to catch events early
+      }, true);
 
-    // Track form submissions
-    document.addEventListener('submit', function(event) {
-      const form = event.target;
-      if (form.tagName === 'FORM') {
-        trackFormSubmit(form);
-      }
-    }, true);
+      // Track form submissions
+      document.addEventListener('submit', function(event) {
+        var form = event.target;
+        if (form && form.tagName === 'FORM') {
+          trackFormSubmit(form);
+        }
+      }, true);
+    }
 
     debugLog('Metrics Lab tracking initialized');
   }
 
   // ============================================================================
-  // INITIALIZATION
+  // INITIALIZATION - WordPress Safe
   // ============================================================================
 
-  // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    // DOM is already ready
-    initialize();
+  /**
+   * Safe initialization with multiple fallbacks
+   * Ensures compatibility with all WordPress environments
+   */
+  function safeInitialize() {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initialize();
+    } else if (document.addEventListener) {
+      document.addEventListener('DOMContentLoaded', initialize);
+    } else if (document.attachEvent) {
+      // IE8 fallback
+      document.attachEvent('onreadystatechange', function() {
+        if (document.readyState === 'complete') {
+          initialize();
+        }
+      });
+    } else {
+      // Ultimate fallback
+      window.onload = initialize;
+    }
   }
 
-  // Expose track function globally for custom event tracking
-  window.MetricsLab = {
-    track: track,
-    trackPageView: trackPageView,
-    trackCallClick: trackCallClick,
-    trackFormSubmit: trackFormSubmit,
-    version: '2.0.0'
-  };
+  // Start initialization
+  safeInitialize();
+
+  // Expose functions globally for custom event tracking
+  // Safe global assignment
+  if (typeof window !== 'undefined') {
+    window.MetricsLab = {
+      track: track,
+      trackPageView: trackPageView,
+      trackCallClick: trackCallClick,
+      trackFormSubmit: trackFormSubmit,
+      version: '2.1.0'
+    };
+  }
 
 })();
 
