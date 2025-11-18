@@ -8,94 +8,186 @@ export default function InstallationGuide({ projectId, apiKey }) {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     
-    const trackingScriptCode = `<!-- Metrics Lab Enhanced Tracking Script -->
+    const trackingScriptCode = `<!-- Metrics Lab Enhanced Tracking Script - WordPress Safe v2.1.0 -->
 <script>
 (function() {
-  'use strict';
-  
   // Configuration
-  const API_KEY = '${apiKey || 'YOUR_API_KEY_HERE'}';
-  const TRACKING_ENDPOINT = '${apiUrl}/track';
-  const DEBUG_MODE = false;
+  var API_KEY = '${apiKey || 'YOUR_API_KEY_HERE'}';
+  var TRACKING_ENDPOINT = '${apiUrl}/track';
+  var DEBUG_MODE = false;
   
-  // Extract URL parameters
+  // Extract URL parameters (compatible with all browsers)
   function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
+    var params = {};
+    var search = window.location.search.substring(1);
+    if (search) {
+      var pairs = search.split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var pair = pairs[i].split('=');
+        if (pair.length === 2) {
+          params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+        }
+      }
+    }
     return {
-      gclid: params.get('gclid') || null,
-      fbclid: params.get('fbclid') || null,
-      ttclid: params.get('ttclid') || null,
-      li_fat_id: params.get('li_fat_id') || null,
-      utm_source: params.get('utm_source') || null,
-      utm_medium: params.get('utm_medium') || null,
-      utm_campaign: params.get('utm_campaign') || null,
-      utm_term: params.get('utm_term') || null,
-      utm_content: params.get('utm_content') || null
+      gclid: params.gclid || null,
+      fbclid: params.fbclid || null,
+      ttclid: params.ttclid || null,
+      li_fat_id: params.li_fat_id || null,
+      utm_source: params.utm_source || null,
+      utm_medium: params.utm_medium || null,
+      utm_campaign: params.utm_campaign || null,
+      utm_term: params.utm_term || null,
+      utm_content: params.utm_content || null
     };
   }
   
-  // Send tracking event
-  function track(eventType, additionalData = {}) {
-    if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
-      console.error('[Metrics Lab] Invalid API key');
-      return Promise.reject(new Error('Invalid API key'));
+  // Debug logging
+  function debugLog(message, data) {
+    if (DEBUG_MODE && window.console && window.console.log) {
+      window.console.log('[Metrics Lab]', message, data || '');
     }
-    
-    const data = {
+  }
+  
+  // Send tracking event
+  function track(eventType, additionalData) {
+    additionalData = additionalData || {};
+    if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
+      if (window.console && window.console.error) {
+        window.console.error('[Metrics Lab] Invalid API key');
+      }
+      return;
+    }
+    var urlParams = getUrlParams();
+    var data = {
       apiKey: API_KEY,
       event_type: eventType,
       page_url: window.location.href,
       referrer: document.referrer || null,
-      ...getUrlParams(),
-      ...additionalData,
       timestamp: new Date().toISOString()
     };
-    
-    Object.keys(data).forEach(key => {
-      if (data[key] === null || data[key] === undefined) {
-        delete data[key];
+    for (var key in urlParams) {
+      if (urlParams.hasOwnProperty(key) && urlParams[key] !== null) {
+        data[key] = urlParams[key];
       }
-    });
-    
-    if (DEBUG_MODE) console.log('[Metrics Lab] Tracking:', data);
-    
-    return fetch(TRACKING_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      keepalive: true
-    }).catch(err => console.error('[Metrics Lab] Error:', err));
+    }
+    for (var key in additionalData) {
+      if (additionalData.hasOwnProperty(key) && additionalData[key] !== null) {
+        data[key] = additionalData[key];
+      }
+    }
+    debugLog('Tracking:', data);
+    if (window.fetch) {
+      fetch(TRACKING_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        keepalive: true
+      }).then(function(response) {
+        if (response.ok) debugLog('Success:', eventType);
+      }).catch(function(err) {
+        debugLog('Error:', err);
+      });
+    } else {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', TRACKING_ENDPOINT, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify(data));
+    }
   }
   
   // Track page view
   function trackPageView() {
-    track('page_view').catch(() => {});
+    track('page_view');
+  }
+  
+  // Track clicks
+  function trackClick(element) {
+    var buttonText = null;
+    if (element.textContent) {
+      buttonText = element.textContent.trim();
+      if (buttonText.length > 100) buttonText = buttonText.substring(0, 100);
+    }
+    track('click', {
+      clicked_url: element.href || window.location.href,
+      button_id: element.id || null,
+      button_href: element.getAttribute('href') || null,
+      button_text: buttonText,
+      button_class: element.className || null
+    });
+  }
+  
+  // Track call clicks
+  function trackCallClick(element) {
+    track('call_click', {
+      phone_number: element.href.replace('tel:', '').trim(),
+      button_id: element.id || null,
+      button_text: element.textContent ? element.textContent.trim() : null
+    });
+  }
+  
+  // Track form submits
+  function trackFormSubmit(form) {
+    track('form_submit', {
+      form_id: form.id || null,
+      form_name: form.name || null,
+      form_action: form.action || null
+    });
   }
   
   // Initialize tracking
   function initialize() {
+    debugLog('Initializing...');
     trackPageView();
-    
-    document.addEventListener('click', function(event) {
-      const element = event.target.closest('a, button');
-      if (element) {
-        track('click', {
-          clicked_url: element.href || window.location.href,
-          button_id: element.id || null,
-          button_href: element.getAttribute('href') || null,
-          button_text: element.textContent?.trim().substring(0, 100) || null
-        }).catch(() => {});
-      }
-    }, true);
+    if (document.addEventListener) {
+      document.addEventListener('click', function(event) {
+        var element = event.target;
+        while (element && element !== document) {
+          if (element.tagName === 'A' || element.tagName === 'BUTTON') {
+            if (element.tagName === 'A' && element.href && element.href.indexOf('tel:') === 0) {
+              trackCallClick(element);
+            } else {
+              trackClick(element);
+            }
+            break;
+          }
+          element = element.parentNode;
+        }
+      }, true);
+      document.addEventListener('submit', function(event) {
+        var form = event.target;
+        if (form && form.tagName === 'FORM') trackFormSubmit(form);
+      }, true);
+    }
+    debugLog('Initialized');
   }
   
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
+  // Safe initialization
+  function safeInitialize() {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initialize();
+    } else if (document.addEventListener) {
+      document.addEventListener('DOMContentLoaded', initialize);
+    } else if (document.attachEvent) {
+      document.attachEvent('onreadystatechange', function() {
+        if (document.readyState === 'complete') initialize();
+      });
+    } else {
+      window.onload = initialize;
+    }
   }
   
-  window.MetricsLab = { track, trackPageView, version: '2.0.0' };
+  safeInitialize();
+  
+  if (typeof window !== 'undefined') {
+    window.MetricsLab = {
+      track: track,
+      trackPageView: trackPageView,
+      trackCallClick: trackCallClick,
+      trackFormSubmit: trackFormSubmit,
+      version: '2.1.0'
+    };
+  }
 })();
 </script>`;
 
