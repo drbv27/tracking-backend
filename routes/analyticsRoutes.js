@@ -21,10 +21,26 @@ async function verifyProjectOwnership(projectId, userId) {
 
 // Helper function to parse date range from query parameters
 function getDateRange(req) {
-    const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date();
-    const startDate = req.query.startDate 
-        ? new Date(req.query.startDate) 
-        : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // Default: last 30 days
+    // Parse endDate and set to end of day (23:59:59.999) in UTC
+    let endDate;
+    if (req.query.endDate) {
+        // Parse date string as UTC by appending 'T23:59:59.999Z'
+        endDate = new Date(req.query.endDate + 'T23:59:59.999Z');
+    } else {
+        endDate = new Date();
+        endDate.setUTCHours(23, 59, 59, 999);
+    }
+    
+    // Parse startDate and set to start of day (00:00:00.000) in UTC
+    let startDate;
+    if (req.query.startDate) {
+        // Parse date string as UTC by appending 'T00:00:00.000Z'
+        startDate = new Date(req.query.startDate + 'T00:00:00.000Z');
+    } else {
+        // Default: last 30 days
+        startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate.setUTCHours(0, 0, 0, 0);
+    }
     
     return { startDate, endDate };
 }
