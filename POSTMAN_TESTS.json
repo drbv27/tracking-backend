@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "Metrics Lab - Debug Tests",
+    "description": "Colección completa de tests para debugging del sistema de tracking",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "FASE 1: Backend Tests",
+      "item": [
+        {
+          "name": "1.1 - Test Básico - Page View",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"page_view\",\n  \"page_url\": \"https://test-postman.com/\",\n  \"referrer\": null,\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test básico para verificar que el endpoint /track responde correctamente"
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 - Test con Parámetros de Campaña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"page_view\",\n  \"page_url\": \"https://test-postman.com/?gclid=test_postman_001&utm_source=postman&utm_medium=test&utm_campaign=debug_backend\",\n  \"gclid\": \"test_postman_001\",\n  \"utm_source\": \"postman\",\n  \"utm_medium\": \"test\",\n  \"utm_campaign\": \"debug_backend\",\n  \"referrer\": \"https://www.google.com/search?q=test\",\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test con parámetros UTM y gclid para verificar detección de campañas"
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 - Test API Key Inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"invalid_key_12345\",\n  \"event_type\": \"page_view\",\n  \"page_url\": \"https://test-postman.com/\",\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test para verificar que el backend rechaza API keys inválidos"
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 - Test Click Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"click\",\n  \"page_url\": \"https://test-postman.com/\",\n  \"clicked_url\": \"https://test-postman.com/contact\",\n  \"button_id\": \"btn-contact\",\n  \"button_text\": \"Contact Us\",\n  \"button_class\": \"btn btn-primary\",\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test para verificar tracking de clicks"
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 - Test Call Click Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"call_click\",\n  \"page_url\": \"https://test-postman.com/\",\n  \"phone_number\": \"+1234567890\",\n  \"button_id\": \"btn-call\",\n  \"button_text\": \"Call Now\",\n  \"gclid\": \"test_postman_001\",\n  \"utm_campaign\": \"debug_backend\",\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test para verificar tracking de clicks en teléfono con asociación a campaña"
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 - Test Form Submit Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"form_submit\",\n  \"page_url\": \"https://test-postman.com/contact\",\n  \"form_id\": \"contact-form\",\n  \"form_name\": \"Contact Form\",\n  \"form_action\": \"/submit-contact\",\n  \"fbclid\": \"test_facebook_001\",\n  \"utm_source\": \"facebook\",\n  \"utm_campaign\": \"lead_gen\",\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test para verificar tracking de envío de formularios con asociación a campaña de Facebook"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FASE 2: CORS Tests",
+      "item": [
+        {
+          "name": "2.1 - OPTIONS Preflight Request",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://abogadodebancarrota.com"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "Content-Type"
+              }
+            ],
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test de preflight CORS para verificar que el servidor permite requests desde otros dominios"
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 - POST con Origin Header",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "https://abogadodebancarrota.com"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"key_8bfce6f8-1d05-4a93-8a94-6e46aa33fea4\",\n  \"event_type\": \"page_view\",\n  \"page_url\": \"https://abogadodebancarrota.com/\",\n  \"referrer\": null,\n  \"timestamp\": \"2025-11-19T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "https://app.metricslab.io/track",
+              "protocol": "https",
+              "host": ["app", "metricslab", "io"],
+              "path": ["track"]
+            },
+            "description": "Test POST con header Origin para simular request desde WordPress"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

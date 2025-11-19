@@ -103,11 +103,21 @@ class TrafficSourceDetector {
 
     // 4. Check referrer-based traffic
     if (eventData.referrer) {
-      const domain = this.extractDomain(eventData.referrer);
+      const referrerDomain = this.extractDomain(eventData.referrer);
+      const currentDomain = eventData.pageUrl ? this.extractDomain(eventData.pageUrl) : null;
       
-      if (domain) {
+      if (referrerDomain) {
+        // Check if referrer is the same domain (self-referral = direct traffic)
+        if (currentDomain && referrerDomain === currentDomain) {
+          return {
+            type: 'direct',
+            platform: 'direct',
+            medium: 'none'
+          };
+        }
+
         // Check if referrer is a search engine (organic traffic)
-        const searchEngine = this.identifySearchEngine(domain);
+        const searchEngine = this.identifySearchEngine(referrerDomain);
         if (searchEngine) {
           return {
             type: 'organic',
@@ -118,12 +128,12 @@ class TrafficSourceDetector {
 
         // Check if referrer is a social platform
         const isSocial = this.SOCIAL_PLATFORMS.some(platform => 
-          domain.includes(platform)
+          referrerDomain.includes(platform)
         );
         
         if (isSocial) {
           const platformName = this.SOCIAL_PLATFORMS.find(platform => 
-            domain.includes(platform)
+            referrerDomain.includes(platform)
           ).split('.')[0];
           
           return {
@@ -133,10 +143,10 @@ class TrafficSourceDetector {
           };
         }
 
-        // Otherwise, it's referral traffic
+        // Otherwise, it's referral traffic from external domain
         return {
           type: 'referral',
-          platform: domain,
+          platform: referrerDomain,
           medium: 'referral'
         };
       }
