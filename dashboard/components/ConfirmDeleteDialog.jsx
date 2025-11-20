@@ -47,7 +47,7 @@ export default function ConfirmDeleteDialog({
           {/* Content */}
           <div className="mb-6">
             <p className="text-gray-700 mb-3">
-              ¿Estás seguro de que deseas eliminar <strong className="text-gray-900">"{projectName}"</strong>?
+              ¿Estás seguro de que deseas eliminar <strong className="text-gray-900">&quot;{projectName}&quot;</strong>?
             </p>
 
             <p className="text-gray-700 mb-2">
