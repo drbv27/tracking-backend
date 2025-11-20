@@ -5,6 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
+import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog';
+import Toast from '../../components/Toast';
+import { useToast } from '../../hooks/useToast';
+import { deleteProject as deleteProjectAPI } from '../../utils/api';
 
 // En producción, usa una ruta relativa. En desarrollo, usa la URL completa.
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || '/api');
@@ -20,6 +24,12 @@ export default function DashboardPage() {
     const [newProjectName, setNewProjectName] = useState('');
     const [error, setError] = useState(null);
     const [copiedKey, setCopiedKey] = useState(null);
+    
+    // --- Hooks para Delete Functionality ---
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast, showSuccess, showError, hideToast } = useToast();
 
     // --- Efecto de Guardia de Autenticación (como antes) ---
     useEffect(() => {
@@ -74,6 +84,44 @@ export default function DashboardPage() {
         router.push('/');
     };
 
+    // --- Funciones para Delete Functionality ---
+    const handleDeleteClick = (project) => {
+        setProjectToDelete(project);
+        setIsDialogOpen(true);
+    };
+
+    const handleCancelDelete = () => {
+        setIsDialogOpen(false);
+        setProjectToDelete(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!projectToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            // Call API to delete project
+            const result = await deleteProjectAPI(projectToDelete._id);
+            
+            // Remove project from local state
+            setProjects(projects.filter(p => p._id !== projectToDelete._id));
+            
+            // Show success message
+            showSuccess(`Proyecto "${projectToDelete.name}" eliminado exitosamente`);
+            
+            // Close dialog
+            setIsDialogOpen(false);
+            setProjectToDelete(null);
+            
+            console.log('Project deleted:', result);
+        } catch (err) {
+            console.error('Error deleting project:', err);
+            showError(err.message || 'Error al eliminar el proyecto');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     // --- Renderizado (con lógica) ---
     if (loading) {
         return (
@@ -85,6 +133,24 @@ export default function DashboardPage() {
 
     return isAuthenticated ? (
         <div className="min-h-screen bg-gray-100">
+            {/* Toast Notification */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type} 
+                    onClose={hideToast} 
+                />
+            )}
+
+            {/* Confirmation Dialog */}
+            <ConfirmDeleteDialog
+                isOpen={isDialogOpen}
+                projectName={projectToDelete?.name || ''}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+                isLoading={isDeleting}
+            />
+
             {/* --- Barra de Navegación (como antes) --- */}
             <nav className="bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,18 +214,39 @@ export default function DashboardPage() {
                         ) : (
                             <ul className="space-y-4">
                                 {projects.map((project) => (
-                                    <li key={project._id} className="border p-4 rounded-md bg-gray-50">
+                                    <li key={project._id} className="border p-4 rounded-md bg-gray-50 relative">
                                         
-                                        {/* --- ¡CAMBIO AQUÍ! --- */}
+                                        {/* Delete button - positioned in top-right corner */}
+                                        <button
+                                            onClick={() => handleDeleteClick(project)}
+                                            className="absolute top-2 right-2 text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition"
+                                            aria-label={`Eliminar proyecto ${project.name}`}
+                                            title="Eliminar proyecto"
+                                        >
+                                            <svg 
+                                                className="w-5 h-5" 
+                                                fill="none" 
+                                                stroke="currentColor" 
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path 
+                                                    strokeLinecap="round" 
+                                                    strokeLinejoin="round" 
+                                                    strokeWidth={2} 
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                                                />
+                                            </svg>
+                                        </button>
+                                        
+                                        {/* Project name with link */}
                                         <Link href={`/project/${project._id}`} className="hover:underline">
-                                            <h3 className="text-lg font-semibold text-blue-700 hover:text-blue-800">
+                                            <h3 className="text-lg font-semibold text-blue-700 hover:text-blue-800 pr-8">
                                                 {project.name}
                                             </h3>
                                         </Link>
                                         
                                         <p className="text-sm text-gray-500 mt-2">API Key:</p>
                                         <div className="flex items-center space-x-2 mt-1">
-                                            {/* ... (el input y botón de copiar quedan igual) ... */}
                                             <input
                                                 type="text"
                                                 readOnly
